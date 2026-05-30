@@ -22,6 +22,13 @@ var resivers = []string{
 	"John Tomson",
 	"Van Li",
 }
+var clients = []Client{
+	{Name: "Muhammadjon S", MobileN: "+992000111111", Card: "5440333322221111"},
+	{Name: "Parviz H", MobileN: "+992000222222", Card: "4000444433332222"},
+	{Name: "Zarina A", MobileN: "+992000333333", Card: "4111555544443333"},
+	{Name: "Bezhan Sh", MobileN: "+992000444444", Card: "4276666655554444"},
+	{Name: "Guldofarin Kh", MobileN: "+992000555555", Card: "6211777766665555"},
+}
 
 type CardIdentifyModel struct {
 	PAN string `json:"pan"`
@@ -56,12 +63,24 @@ type Resiver struct {
 	MobileN     string `json:"mobile_number"`
 	Card        string `json:"card_pan"`
 }
+type Client struct {
+	Name    string `json:"user_name"`
+	MobileN string `json:"mobile_number"`
+	Card    string `json:"card"`
+}
+type CardInfo struct {
+	CardNumber string `json:"card_number"`
+	Format     string `json:"format"`
+	ClientName string `json:"client_name"`
+	Phone      string `json:"mobile"`
+}
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/card", CardIdentify).Methods("POST")
 	r.HandleFunc("/format", CardFormat).Methods("POST")
 	r.HandleFunc("/record", TransactionsRecord).Methods("POST")
+	r.HandleFunc("/data", CardData).Methods("POST")
 
 	fmt.Println("List 8080")
 	http.ListenAndServe(":8080", r)
@@ -86,17 +105,14 @@ func CardFormat(w http.ResponseWriter, r *http.Request) {
 
 	if data.PAN[:4] == "5440" || data.PAN[:4] == "9860" || data.PAN[:4] == "8600" {
 
-		fmt.Println(data.PAN)
 		w.Write([]byte("Its KortiMilli"))
-	}
-	if data.PAN[:1] == "4" {
 
-		fmt.Println(data.PAN)
+	} else if data.PAN[:1] == "4" {
+
 		w.Write([]byte("Its Visa"))
-	}
-	if data.PAN[:2] == "62" || data.PAN[:2] == "81" {
 
-		fmt.Println(data.PAN)
+	} else if data.PAN[:2] == "62" || data.PAN[:2] == "81" {
+
 		w.Write([]byte("Its UnionPay"))
 	}
 }
@@ -225,4 +241,60 @@ func MaskToken(token string) string {
 	}
 
 	return token[:4] + "********" + token[12:]
+}
+
+func CardData(w http.ResponseWriter, r *http.Request) {
+
+	var data ReceivedData
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//тут формат карты
+	var format string
+
+	if len(data.PAN) >= 4 &&
+		(data.PAN[:4] == "5440" || data.PAN[:4] == "9860" || data.PAN[:4] == "8600") {
+		format = "KortiMilli"
+
+	} else if len(data.PAN) >= 1 &&
+		data.PAN[:1] == "4" {
+		format = "Visa"
+
+	} else if len(data.PAN) >= 2 &&
+		(data.PAN[:2] == "62" || data.PAN[:2] == "81") {
+		format = "UnionPay"
+
+	} else {
+		format = "Unknown"
+	}
+
+	//тут клиент с данными
+	for _, client := range clients {
+
+		if client.Card == data.PAN {
+
+			cardInfo := CardInfo{
+				CardNumber: client.Card,
+				Format:     format,
+				ClientName: client.Name,
+				Phone:      client.MobileN,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+
+			result, err := json.MarshalIndent(cardInfo, "", "    ")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Write(result)
+			return
+		}
+	}
+	http.Error(w, "card not found", http.StatusNotFound)
 }
