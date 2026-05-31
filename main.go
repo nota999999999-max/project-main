@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -47,7 +48,13 @@ type Transaction struct {
 	Status   string  `json:"status"`        //text (Success/Decline)
 	Message  string  `json:"message"`       //text (...)
 	Token    string  `json:"token"`
+	IP       string  `json:"ip"` //ip country
 }
+
+type GeoLocation struct {
+	Country string `json:"country"`
+}
+
 type TransactionResponse struct {
 	Token   string `json:"token"`
 	Status  string `json:"status"`
@@ -129,10 +136,7 @@ func TransactionsRecord(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Transaction:", transaction)
 
-	//тут оригинальный PAN
-	originalPAN := transaction.PAN
-
-	//тут проверка антифрода
+	//тут проверка антифрода и результат в терминал
 	if CheckDroppers(transaction) {
 
 		//тут сохранён оригинальный PAN
@@ -151,7 +155,21 @@ func TransactionsRecord(w http.ResponseWriter, r *http.Request) {
 		//тут вывод токена и уведомление в терминал
 		fmt.Println("Generated token:", token)
 
-		fmt.Println("Обнаружен дроперский платёж!")
+		fmt.Println("Попытка дроп платежа! Проверить.")
+
+		//тут Геомонитринг в терминал
+
+		ip := transaction.IP
+
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			host = r.RemoteAddr
+		}
+
+		country := GeoMonitoring(ip)
+
+		fmt.Println("Sender IP:", host)
+		fmt.Println("Sender Country:", country)
 
 		//тут ответ отправителю-sender
 		response := TransactionResponse{
@@ -181,13 +199,6 @@ func TransactionsRecord(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println("Ошибка проведения платежа")
 	}
-
-	//тут маскировка пана
-	transaction.PAN = MaskPAN(originalPAN)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(transaction)
-
 }
 
 func CheckDroppers(trn Transaction) bool {
@@ -297,4 +308,27 @@ func CardData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.Error(w, "card not found", http.StatusNotFound)
+}
+
+func GeoMonitoring(ip string) string {
+
+	url := fmt.Sprintf(
+		"http://ip-api.com/json/%s?fields=country",
+		ip,
+	)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "UNKNOWN"
+	}
+	defer resp.Body.Close()
+
+	var geo GeoLocation
+
+	err = json.NewDecoder(resp.Body).Decode(&geo)
+	if err != nil {
+		return "UNKNOWN"
+	}
+
+	return geo.Country
 }
