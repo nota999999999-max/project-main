@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Anti-Fraud Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b0f1a;
+    color: white;
+}
+
+/* HEADER */
+.header {
+    padding: 15px;
+    background: #111827;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #1f2937;
+}
+
+/* CARDS */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    padding: 15px;
+}
+
+.card {
+    background: #111827;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+}
+
+.value {
+    font-size: 26px;
+    margin-top: 10px;
+}
+
+/* MAP */
+
+.geo-map {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #2c2c2c;
+}
+
+.map-card {
+    background: #111827;
+    border-radius: 12px;
+    margin: 15px;
+    padding: 10px;
+}
+
+.map-header {
+    padding: 12px;
+    background: #0f172a;
+    border-bottom: 1px solid #1f2937;
+    font-weight: bold;
+}
+
+/* ALERTS */
+.alert {
+    margin: 15px;
+    padding: 12px;
+    background: #1f2937;
+    border-left: 5px solid red;
+    border-radius: 8px;
+}
+
+/* TABLE */
+table {
+    width: 95%;
+    margin: 15px;
+    border-collapse: collapse;
+    background: #111827;
+}
+
+th, td {
+    border: 1px solid #1f2937;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background: #1f2937;
+}
+
+.success {
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.decline {
+    color: #ef4444;
+    font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+    <h2>Anti-Fraud Monitoring System</h2>
+    <span>Status: 🟢 ACTIVE</span>
+</div>
+
+<!-- CARDS -->
+<div class="grid">
+    <div class="card">
+        Fraud Score
+        <div class="value">{{.FraudScore}}</div>
+    </div>
+
+    <div class="card">
+        Velocity
+        <div class="value">{{.Velocity}}</div>
+    </div>
+
+    <div class="card">
+        Transactions
+        <div class="value">{{.Transactions}}</div>
+    </div>
+</div>
+
+<!-- MAP -->
+<div class="map-card">
+    <div class="map-header">
+        🌍 Geo Monitoring
+    </div>
+
+    <img src="/static/map.png" class="geo-map">
+</div>
+
+<!-- ALERTS -->
+{{if .Alert}}
+<div class="alert">
+    ⚠ {{.Alert}}
+</div>
+{{end}}
+
+<div class="alert">
+⚠ Multiple login attempts detected from different countries
+</div>
+
+<div class="alert">
+⚠ High-risk crypto provider activity detected
+</div>
+
+<!-- TABLE -->
+<h3 style="margin-left:15px;">Transactions</h3>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Amount</th>
+        <th>Currency</th>
+        <th>PAN</th>
+        <th>Sender</th>
+        <th>Receiver</th>
+        <th>Provider</th>
+        <th>Status</th>
+        <th>Alert</th>
+        <th>IP</th>
+        <th>Country</th>
+        <th>Time</th>
+    </tr>
+
+    {{range .TxList}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Amount}}</td>
+        <td>{{.Currency}}</td>
+        <td>
+    <a href="/data?pan={{.PAN}}" target="_blank">
+        {{.PAN}}
+    </a>
+</td>
+     <td>{{.Sender}}</td>
+        <td>{{.Receiver}}</td>
+        <td>{{.Provider}}</td>
+
+        {{if eq .Status "SUCCESS"}}
+            <td class="success">{{.Status}}</td>
+        {{else}}
+            <td class="decline">{{.Status}}</td>
+        {{end}}
+        
+        <td>{{.Alert}}</td>
+        <td>{{.IP}}</td>
+        <td>{{.Country}}</td>
+        <td>{{.TimeFormatted}}</td>
+    </tr>
+    {{end}}
+</table>
+
+</body>
+</html>
+

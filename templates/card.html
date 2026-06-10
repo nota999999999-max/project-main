@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Card Details</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b0f1a;
+    color: white;
+}
+
+.container {
+    padding: 20px;
+}
+
+.card {
+    background: #111827;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+    width: 400px;
+}
+
+.label {
+    color: #9ca3af;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.value {
+    font-size: 18px;
+    margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Card Profile</h2>
+
+    <div class="card">
+
+        <div class="label">Card Number</div>
+        <div class="value">{{.CardInfo.CardNumber}}</div>
+
+        <div class="label">Format</div>
+        <div class="value">{{.CardInfo.Format}}</div>
+
+        <div class="label">Client Name</div>
+        <div class="value">{{.CardInfo.ClientName}}</div>
+
+        <div class="label">Mobile</div>
+        <div class="value">{{.CardInfo.Phone}}</div>
+
+    </div>
+
+    <h3>Transaction History</h3>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Amount</th>
+        <th>Currency</th>
+        <th>Country</th>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Message</th>
+    </tr>
+
+    {{range .History}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td>{{.Amount}}</td>
+        <td>{{.Currency}}</td>
+        <td>{{.Country}}</td>
+        <td>{{.Time}}</td>
+        <td>{{.Status}}</td>
+        <td>{{.Message}}</td>
+    </tr>
+    {{end}}
+</table>
+
+</div>
+
+</body>
+</html>
